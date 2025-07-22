@@ -24,7 +24,7 @@ jobs:
       - name: Get activitysim version
         id: get_version
         run: |
-          $version = uv run activitysim --version
+          $version = uv run python -c "import activitysim; print(activitysim.__version__)"
           echo "activitysim_version=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Check version matches pyproject.toml
