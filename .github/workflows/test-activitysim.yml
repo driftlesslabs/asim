@@ -1,0 +1,38 @@
+name: Test ActivitySim on Windows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/0.8.1/install.ps1 | iex"
+
+      - name: Sync dependencies with uv
+        run: uv sync
+
+      - name: Get activitysim version
+        id: get_version
+        run: |
+          $version = uv run activitysim --version
+          echo "activitysim_version=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Check version matches pyproject.toml
+        run: |
+          $pyproject = Get-Content pyproject.toml | Select-String -Pattern 'activitysim=='
+          $expected = $pyproject -replace '.*activitysim==([0-9.]+).*', '$1'
+          if ($env:activitysim_version -ne $expected) {
+            Write-Error "Version mismatch: activitysim version is $env:activitysim_version, expected $expected"
+            exit 1
+          }
+
